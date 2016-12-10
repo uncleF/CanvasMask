@@ -3,7 +3,6 @@
 'use strict';
 
 let es6Promise = require('es6-promise');
-
 es6Promise.polyfill();
 
 /* Animation Stuff */
@@ -60,22 +59,27 @@ function calculateValues(factor) {
     X * factor,
     Y * factor,
     WIDTH * (factor + 1),
-    HEIGHT * (factor + 1)
+    HEIGHT * (factor + 1),
+    1 - factor / SCALE
   ];
 }
 
 function drawMask(drawingContext, images, factor) {
   let [background, mask, overlay] = images;
-  let [x, y, width, height] = calculateValues(factor);
+  let [x, y, width, height, opacity] = calculateValues(factor);
   currentScale = factor;
+  drawingContext.globalAlpha = 1;
   drawingContext.clearRect(0, 0, WIDTH, HEIGHT);
   drawingContext.drawImage(mask, x, y, width, height);
   drawingContext.globalCompositeOperation = 'source-in';
   drawingContext.drawImage(background, 0, 0, WIDTH, HEIGHT);
   drawingContext.globalCompositeOperation = 'source-over';
+  drawingContext.globalAlpha = opacity;
   drawingContext.drawImage(overlay, x, y, width, height);
   return images;
 }
+
+/* Events */
 
 function animateMaskOut(drawingContext, images) {
   let duration = DURATION * ((SCALE - currentScale) / SCALE);
@@ -89,13 +93,13 @@ function animateMaskIn(drawingContext, images) {
   runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
 }
 
-/* Interactions */
-
 function subscribe(drawingContext, images) {
   let holder = document.getElementById('holder');
   holder.addEventListener('mouseover', _ => animateMaskOut(drawingContext, images));
   holder.addEventListener('mouseout', _ => animateMaskIn(drawingContext, images));
 }
+
+/* Initialization */
 
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');

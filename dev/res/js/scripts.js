@@ -6,7 +6,6 @@
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var es6Promise = require('es6-promise');
-
 es6Promise.polyfill();
 
 /* Animation Stuff */
@@ -59,7 +58,7 @@ function loadImage(url) {
 }
 
 function calculateValues(factor) {
-  return [X * factor, Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1)];
+  return [X * factor, Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
 }
 
 function drawMask(drawingContext, images, factor) {
@@ -69,21 +68,26 @@ function drawMask(drawingContext, images, factor) {
       overlay = _images[2];
 
   var _calculateValues = calculateValues(factor),
-      _calculateValues2 = _slicedToArray(_calculateValues, 4),
+      _calculateValues2 = _slicedToArray(_calculateValues, 5),
       x = _calculateValues2[0],
       y = _calculateValues2[1],
       width = _calculateValues2[2],
-      height = _calculateValues2[3];
+      height = _calculateValues2[3],
+      opacity = _calculateValues2[4];
 
   currentScale = factor;
+  drawingContext.globalAlpha = 1;
   drawingContext.clearRect(0, 0, WIDTH, HEIGHT);
   drawingContext.drawImage(mask, x, y, width, height);
   drawingContext.globalCompositeOperation = 'source-in';
   drawingContext.drawImage(background, 0, 0, WIDTH, HEIGHT);
   drawingContext.globalCompositeOperation = 'source-over';
+  drawingContext.globalAlpha = opacity;
   drawingContext.drawImage(overlay, x, y, width, height);
   return images;
 }
+
+/* Events */
 
 function animateMaskOut(drawingContext, images) {
   var duration = DURATION * ((SCALE - currentScale) / SCALE);
@@ -97,8 +101,6 @@ function animateMaskIn(drawingContext, images) {
   runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
 }
 
-/* Interactions */
-
 function subscribe(drawingContext, images) {
   var holder = document.getElementById('holder');
   holder.addEventListener('mouseover', function (_) {
@@ -108,6 +110,8 @@ function subscribe(drawingContext, images) {
     return animateMaskIn(drawingContext, images);
   });
 }
+
+/* Initialization */
 
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
