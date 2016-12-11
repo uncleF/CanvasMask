@@ -5,131 +5,157 @@
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
+module.exports = function (elementIDs, imageURLs, position) {
+
+  /* Animation Stuff */
+
+  var animation = void 0;
+
+  function cubicInOut(fraction) {
+    return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
+  }
+
+  function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
+    animation = requestAnimationFrame(function (_) {
+      var fraction = (Date.now() - startTime) / duration;
+      if (fraction < 1) {
+        var adjustedFraction = cubicInOut(fraction);
+        var newValue = startValue + deltaValue * adjustedFraction;
+        drawMask(drawingContext, images, newValue);
+        runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
+      } else {
+        drawMask(drawingContext, images, startValue + deltaValue);
+      }
+    });
+  }
+
+  /* Video Stuff */
+
+  function startVideo(id) {
+    document.getElementById(id).play();
+  }
+
+  /* Canvas Stuff */
+
+  var DURATION = 2000;
+  var WIDTH = 1280;
+  var HEIGHT = 720;
+  var SCALE = 9;
+
+  var _position = _slicedToArray(position, 2),
+      X = _position[0],
+      Y = _position[1];
+
+  var currentScale = 0;
+
+  function loadImage(url) {
+    return new Promise(function (resolve, reject) {
+      var image = new Image();
+      image.addEventListener('load', function (_) {
+        resolve(image);
+      });
+      image.src = url;
+    });
+  }
+
+  function calculateValues(factor) {
+    return [X * factor, Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
+  }
+
+  function drawMask(drawingContext, images, factor) {
+    var _images = _slicedToArray(images, 3),
+        background = _images[0],
+        mask = _images[1],
+        overlay = _images[2];
+
+    var _calculateValues = calculateValues(factor),
+        _calculateValues2 = _slicedToArray(_calculateValues, 5),
+        x = _calculateValues2[0],
+        y = _calculateValues2[1],
+        width = _calculateValues2[2],
+        height = _calculateValues2[3],
+        opacity = _calculateValues2[4];
+
+    currentScale = factor;
+    drawingContext.globalAlpha = 1;
+    drawingContext.clearRect(0, 0, WIDTH, HEIGHT);
+    drawingContext.drawImage(mask, x, y, width, height);
+    drawingContext.globalCompositeOperation = 'source-in';
+    drawingContext.drawImage(background, 0, 0, WIDTH, HEIGHT);
+    drawingContext.globalCompositeOperation = 'source-over';
+    drawingContext.globalAlpha = opacity;
+    drawingContext.drawImage(overlay, x, y, width, height);
+    return images;
+  }
+
+  /* Events */
+
+  function animateMaskOut(drawingContext, images) {
+    var delta = SCALE - currentScale;
+    var duration = DURATION * (delta / SCALE);
+    cancelAnimationFrame(animation);
+    runAnimation(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
+  }
+
+  function animateMaskIn(drawingContext, images) {
+    var duration = DURATION * (currentScale / SCALE);
+    cancelAnimationFrame(animation);
+    runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
+  }
+
+  function subscribe(drawingContext, images) {
+    var holder = document.getElementById('holder');
+    holder.addEventListener('mouseover', function (_) {
+      return animateMaskOut(drawingContext, images);
+    });
+    holder.addEventListener('mouseout', function (_) {
+      return animateMaskIn(drawingContext, images);
+    });
+  }
+
+  /* Initialization */
+
+  var _elementIDs = _slicedToArray(elementIDs, 2),
+      canvasID = _elementIDs[0],
+      videoID = _elementIDs[1];
+
+  var canvas = document.getElementById(canvasID);
+  var context = canvas.getContext('2d');
+
+  var _imageURLs = _slicedToArray(imageURLs, 3),
+      BG_URL = _imageURLs[0],
+      MASK_URL = _imageURLs[1],
+      OVERLAY_URL = _imageURLs[2];
+
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
+
+  return Promise.all([loadImage(BG_URL), loadImage(MASK_URL), loadImage(OVERLAY_URL)]).then(function (images) {
+    return drawMask(context, images, 0);
+  }).then(function (images) {
+    return subscribe(context, images);
+  }).then(function (_) {
+    return startVideo(videoID);
+  });
+};
+
+},{}],2:[function(require,module,exports){
+/* jshint browser:true */
+
+'use strict';
+
 var es6Promise = require('es6-promise');
+var mask = require('mask');
+
 es6Promise.polyfill();
 
-/* Animation Stuff */
+var firstFrameIDs = ['canvas', 'video'];
+var firstFrameURLs = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
+var firstFramePosition = [-120, -200];
 
-var animation = void 0;
+mask(firstFrameIDs, firstFrameURLs, firstFramePosition);
 
-function cubicInOut(fraction) {
-  return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
-}
-
-function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
-  animation = requestAnimationFrame(function (_) {
-    var fraction = (Date.now() - startTime) / duration;
-    if (fraction < 1) {
-      var adjustedFraction = cubicInOut(fraction);
-      var newValue = startValue + deltaValue * adjustedFraction;
-      drawMask(drawingContext, images, newValue);
-      runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
-    } else {
-      drawMask(drawingContext, images, startValue + deltaValue);
-    }
-  });
-}
-
-/* Video Stuff */
-
-function startVideo() {
-  document.getElementById('video').play();
-}
-
-/* Canvas Stuff */
-
-var DURATION = 2000;
-var X = -120;
-var Y = -200;
-var WIDTH = 1280;
-var HEIGHT = 720;
-var SCALE = 9;
-
-var currentScale = 0;
-
-function loadImage(url) {
-  return new Promise(function (resolve, reject) {
-    var image = new Image();
-    image.addEventListener('load', function (_) {
-      resolve(image);
-    });
-    image.src = url;
-  });
-}
-
-function calculateValues(factor) {
-  return [X * factor, Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
-}
-
-function drawMask(drawingContext, images, factor) {
-  var _images = _slicedToArray(images, 3),
-      background = _images[0],
-      mask = _images[1],
-      overlay = _images[2];
-
-  var _calculateValues = calculateValues(factor),
-      _calculateValues2 = _slicedToArray(_calculateValues, 5),
-      x = _calculateValues2[0],
-      y = _calculateValues2[1],
-      width = _calculateValues2[2],
-      height = _calculateValues2[3],
-      opacity = _calculateValues2[4];
-
-  currentScale = factor;
-  drawingContext.globalAlpha = 1;
-  drawingContext.clearRect(0, 0, WIDTH, HEIGHT);
-  drawingContext.drawImage(mask, x, y, width, height);
-  drawingContext.globalCompositeOperation = 'source-in';
-  drawingContext.drawImage(background, 0, 0, WIDTH, HEIGHT);
-  drawingContext.globalCompositeOperation = 'source-over';
-  drawingContext.globalAlpha = opacity;
-  drawingContext.drawImage(overlay, x, y, width, height);
-  return images;
-}
-
-/* Events */
-
-function animateMaskOut(drawingContext, images) {
-  var duration = DURATION * ((SCALE - currentScale) / SCALE);
-  cancelAnimationFrame(animation);
-  runAnimation(Date.now(), duration, currentScale, SCALE - currentScale, drawingContext, images, drawMask);
-}
-
-function animateMaskIn(drawingContext, images) {
-  var duration = DURATION * (currentScale / SCALE);
-  cancelAnimationFrame(animation);
-  runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
-}
-
-function subscribe(drawingContext, images) {
-  var holder = document.getElementById('holder');
-  holder.addEventListener('mouseover', function (_) {
-    return animateMaskOut(drawingContext, images);
-  });
-  holder.addEventListener('mouseout', function (_) {
-    return animateMaskIn(drawingContext, images);
-  });
-}
-
-/* Initialization */
-
-var canvas = document.getElementById('canvas');
-var context = canvas.getContext('2d');
-
-var BG_URL = 'res/images/background.png';
-var MASK_URL = 'res/images/mask.png';
-var OVERLAY_URL = 'res/images/overlay.png';
-
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
-
-Promise.all([loadImage(BG_URL), loadImage(MASK_URL), loadImage(OVERLAY_URL)]).then(function (images) {
-  return drawMask(context, images, 0);
-}).then(function (images) {
-  return subscribe(context, images);
-}).then(startVideo);
-
-},{"es6-promise":2}],2:[function(require,module,exports){
+},{"es6-promise":3,"mask":1}],3:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1289,7 +1315,7 @@ return Promise;
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":3}],3:[function(require,module,exports){
+},{"_process":4}],4:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1471,4 +1497,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[1]);
+},{}]},{},[2]);
