@@ -3,48 +3,48 @@
 
 'use strict';
 
+var animation = void 0;
+
+function cubicInOut(fraction) {
+  return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
+}
+
+function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
+  animation = requestAnimationFrame(function (_) {
+    var fraction = (Date.now() - startTime) / duration;
+    if (fraction < 1) {
+      var adjustedFraction = cubicInOut(fraction);
+      var newValue = startValue + deltaValue * adjustedFraction;
+      task(drawingContext, images, newValue);
+      runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
+    } else {
+      task(drawingContext, images, startValue + deltaValue);
+    }
+  });
+}
+
+exports.run = runAnimation;
+
+},{}],2:[function(require,module,exports){
+/* jshint browser:true */
+
+'use strict';
+
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-module.exports = function (elementIDs, imageURLs, position) {
+var animation = require('animation');
 
-  /* Animation Stuff */
-
-  var animation = void 0;
-
-  function cubicInOut(fraction) {
-    return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
-  }
-
-  function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
-    animation = requestAnimationFrame(function (_) {
-      var fraction = (Date.now() - startTime) / duration;
-      if (fraction < 1) {
-        var adjustedFraction = cubicInOut(fraction);
-        var newValue = startValue + deltaValue * adjustedFraction;
-        drawMask(drawingContext, images, newValue);
-        runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
-      } else {
-        drawMask(drawingContext, images, startValue + deltaValue);
-      }
-    });
-  }
-
-  /* Video Stuff */
-
-  function startVideo(id) {
-    document.getElementById(id).play();
-  }
-
-  /* Canvas Stuff */
+module.exports = function (elementIDs, imageURLs, positionShift) {
 
   var DURATION = 2000;
+
   var WIDTH = 1280;
   var HEIGHT = 720;
   var SCALE = 9;
 
-  var _position = _slicedToArray(position, 2),
-      X = _position[0],
-      Y = _position[1];
+  var _positionShift = _slicedToArray(positionShift, 2),
+      SHIFT_X = _positionShift[0],
+      SHIFT_Y = _positionShift[1];
 
   var currentScale = 0;
 
@@ -59,7 +59,7 @@ module.exports = function (elementIDs, imageURLs, position) {
   }
 
   function calculateValues(factor) {
-    return [X * factor, Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
+    return [SHIFT_X * factor, SHIFT_Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
   }
 
   function drawMask(drawingContext, images, factor) {
@@ -94,17 +94,17 @@ module.exports = function (elementIDs, imageURLs, position) {
     var delta = SCALE - currentScale;
     var duration = DURATION * (delta / SCALE);
     cancelAnimationFrame(animation);
-    runAnimation(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
+    animation.run(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
   }
 
   function animateMaskIn(drawingContext, images) {
     var duration = DURATION * (currentScale / SCALE);
     cancelAnimationFrame(animation);
-    runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
+    animation.run(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
   }
 
-  function subscribe(drawingContext, images) {
-    var holder = document.getElementById('holder');
+  function subscribe(id, drawingContext, images) {
+    var holder = document.getElementById(id);
     holder.addEventListener('mouseover', function (_) {
       return animateMaskOut(drawingContext, images);
     });
@@ -117,7 +117,7 @@ module.exports = function (elementIDs, imageURLs, position) {
 
   var _elementIDs = _slicedToArray(elementIDs, 2),
       canvasID = _elementIDs[0],
-      videoID = _elementIDs[1];
+      holderID = _elementIDs[1];
 
   var canvas = document.getElementById(canvasID);
   var context = canvas.getContext('2d');
@@ -133,13 +133,11 @@ module.exports = function (elementIDs, imageURLs, position) {
   return Promise.all([loadImage(BG_URL), loadImage(MASK_URL), loadImage(OVERLAY_URL)]).then(function (images) {
     return drawMask(context, images, 0);
   }).then(function (images) {
-    return subscribe(context, images);
-  }).then(function (_) {
-    return startVideo(videoID);
+    return subscribe(holderID, context, images);
   });
 };
 
-},{}],2:[function(require,module,exports){
+},{"animation":1}],3:[function(require,module,exports){
 /* jshint browser:true */
 
 'use strict';
@@ -149,13 +147,13 @@ var mask = require('mask');
 
 es6Promise.polyfill();
 
-var firstFrameIDs = ['canvas', 'video'];
+var firstFrameIDs = ['canvas', 'holder'];
 var firstFrameURLs = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
 var firstFramePosition = [-120, -200];
 
 mask(firstFrameIDs, firstFrameURLs, firstFramePosition);
 
-},{"es6-promise":3,"mask":1}],3:[function(require,module,exports){
+},{"es6-promise":4,"mask":2}],4:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1315,7 +1313,7 @@ return Promise;
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":4}],4:[function(require,module,exports){
+},{"_process":5}],5:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1497,4 +1495,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[2]);
+},{}]},{},[3]);

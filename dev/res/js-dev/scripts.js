@@ -7,7 +7,7 @@ let mask = require('mask');
 
 es6Promise.polyfill();
 
-let firstFrameIDs = ['canvas', 'video'];
+let firstFrameIDs = ['canvas', 'holder'];
 let firstFrameURLs = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
 let firstFramePosition = [-120, -200];
 

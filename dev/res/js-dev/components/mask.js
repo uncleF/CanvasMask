@@ -2,44 +2,17 @@
 
 'use strict';
 
-module.exports = (elementIDs, imageURLs, position) => {
+let animation = require('animation');
 
-  /* Animation Stuff */
-
-  let animation;
-
-  function cubicInOut(fraction) {
-    return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
-  }
-
-  function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
-    animation = requestAnimationFrame(_ => {
-      let fraction = (Date.now() - startTime) / duration;
-      if (fraction < 1) {
-        let adjustedFraction = cubicInOut(fraction);
-        let newValue = startValue + deltaValue * adjustedFraction;
-        drawMask(drawingContext, images, newValue);
-        runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
-      } else {
-        drawMask(drawingContext, images, (startValue + deltaValue));
-      }
-    });
-  }
-
-  /* Video Stuff */
-
-  function startVideo(id) {
-    document.getElementById(id).play();
-  }
-
-  /* Canvas Stuff */
+module.exports = (elementIDs, imageURLs, positionShift) => {
 
   const DURATION = 2000;
+
   const WIDTH = 1280;
   const HEIGHT = 720;
   const SCALE = 9;
 
-  const [X, Y] = position;
+  const [SHIFT_X, SHIFT_Y] = positionShift;
 
   let currentScale = 0;
 
@@ -55,8 +28,8 @@ module.exports = (elementIDs, imageURLs, position) => {
 
   function calculateValues(factor) {
     return [
-      X * factor,
-      Y * factor,
+      SHIFT_X * factor,
+      SHIFT_Y * factor,
       WIDTH * (factor + 1),
       HEIGHT * (factor + 1),
       1 - factor / SCALE
@@ -84,24 +57,24 @@ module.exports = (elementIDs, imageURLs, position) => {
     let delta = (SCALE - currentScale);
     let duration = DURATION * (delta / SCALE);
     cancelAnimationFrame(animation);
-    runAnimation(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
+    animation.run(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
   }
 
   function animateMaskIn(drawingContext, images) {
     let duration = DURATION * (currentScale / SCALE);
     cancelAnimationFrame(animation);
-    runAnimation(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
+    animation.run(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
   }
 
-  function subscribe(drawingContext, images) {
-    let holder = document.getElementById('holder');
+  function subscribe(id, drawingContext, images) {
+    let holder = document.getElementById(id);
     holder.addEventListener('mouseover', _ => animateMaskOut(drawingContext, images));
     holder.addEventListener('mouseout', _ => animateMaskIn(drawingContext, images));
   }
 
   /* Initialization */
 
-  let [canvasID, videoID] = elementIDs;
+  let [canvasID, holderID] = elementIDs;
 
   let canvas = document.getElementById(canvasID);
   let context = canvas.getContext('2d');
@@ -113,7 +86,6 @@ module.exports = (elementIDs, imageURLs, position) => {
 
   return Promise.all([loadImage(BG_URL), loadImage(MASK_URL), loadImage(OVERLAY_URL)])
     .then(images => drawMask(context, images, 0))
-    .then(images => subscribe(context, images))
-    .then(_ => startVideo(videoID));
+    .then(images => subscribe(holderID, context, images));
 
 };
