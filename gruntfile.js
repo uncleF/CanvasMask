@@ -10,8 +10,8 @@ var CONFIG = {
     'Explorer >= 8'
   ],
 
-  DEVELOPMENT_DIR: 'dev',        // Development
-  BUILD_DIR: 'docs',            // Build
+  DEVELOPMENT_DIR: 'demo',       // Development
+  BUILD_DIR: 'docs',             // Build
   META_DIR: 'meta',              // Meta Content
   TESTS_DIR: 'tests',            // Tests
 

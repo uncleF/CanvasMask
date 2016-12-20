@@ -1,7 +1,7 @@
 {
-  "color_variables_files": ["/Users/uncleFucka/Projects/CanvasMask/dev/res/sass/project/_project.scss", "D:/Projects/Projects/CanvasMask/dev/res/sass/project/_project.scss"],
+  "color_variables_files": ["/Users/uncleFucka/Projects/CanvasMask/demo/res/sass/project/_project.scss", "D:/Projects/Projects/CanvasMask/demo/res/sass/project/_project.scss"],
   "folders": [{
-      "folder_exclude_patterns": ["build", "design", "dev", "docs", "meta", "node_modules", "sources", "tests"],
+      "folder_exclude_patterns": ["build", "design", "demo", "docs", "meta", "node_modules", "sources", "tests"],
       "file_exclude_patterns": ["*.zip", "*.sublime-project"],
       "follow_symlinks": true,
       "name": "CanvasMask: Project",
@@ -9,28 +9,18 @@
     }, {
       "follow_symlinks": true,
       "name": "CanvasMask: HTML",
-      "path": "dev/res/templates"
+      "path": "demo/res/templates"
     }, {
       "follow_symlinks": true,
       "name": "CanvasMask: Sass",
-      "path": "dev/res/sass"
+      "path": "demo/res/sass"
     }, {
       "follow_symlinks": true,
       "name": "CanvasMask: JavaScript",
-      "path": "dev/res/js-dev"
+      "path": "demo/res/js-dev"
     }, {
-      "folder_exclude_patterns": ["backstop"],
       "follow_symlinks": true,
       "name": "CanvasMask: Tests",
       "path": "tests"
-    }, {
-      "file_exclude_patterns": ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg", "*.ico"],
-      "follow_symlinks": true,
-      "name": "CanvasMask: Meta",
-      "path": "meta"
-    }, {
-      "follow_symlinks": true,
-      "name": "CanvasMask: Docs",
-      "path": "docs"
     }]
 }
