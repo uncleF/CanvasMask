@@ -4,142 +4,78 @@
 
 'use strict';
 
-var animation = void 0;
-
-function cubicInOut(fraction) {
-  return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
-}
-
-function runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task) {
-  animation = requestAnimationFrame(function (_) {
-    var fraction = (Date.now() - startTime) / duration;
-    if (fraction < 1) {
-      var adjustedFraction = cubicInOut(fraction);
-      var newValue = startValue + deltaValue * adjustedFraction;
-      task(drawingContext, images, newValue);
-      runAnimation(startTime, duration, startValue, deltaValue, drawingContext, images, task);
-    } else {
-      task(drawingContext, images, startValue + deltaValue);
-    }
-  });
-}
-
-exports.run = runAnimation;
-
-},{}],2:[function(require,module,exports){
-
-/* jshint browser:true */
-
-'use strict';
-
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
-var animation = require('animation');
+module.exports = function (options) {
 
-module.exports = function (elementIDs, imageURLs, positionShift) {
+  var id = void 0;
+  var background = void 0;
+  var mask = void 0;
+  var overlay = void 0;
+  var width = void 0;
+  var height = void 0;
 
-  var DURATION = 2000;
+  var container = void 0;
 
-  var WIDTH = 1280;
-  var HEIGHT = 720;
-  var SCALE = 9;
+  var canvas = void 0;
+  var context = void 0;
 
-  var _positionShift = _slicedToArray(positionShift, 2),
-      SHIFT_X = _positionShift[0],
-      SHIFT_Y = _positionShift[1];
-
-  var currentScale = 0;
-
-  function loadImage(url) {
+  function loadImage(href) {
     return new Promise(function (resolve, reject) {
-      var image = new Image();
-      image.addEventListener('load', function (_) {
-        resolve(image);
-      });
-      image.src = url;
+      if (href) {
+        (function () {
+          var image = new Image();
+          image.addEventListener('load', function (_) {
+            resolve(image);
+          });
+          image.src = href;
+        })();
+      } else {
+        resolve(false);
+      }
     });
   }
 
-  function calculateValues(factor) {
-    return [SHIFT_X * factor, SHIFT_Y * factor, WIDTH * (factor + 1), HEIGHT * (factor + 1), 1 - factor / SCALE];
+  function createCanvas() {
+    canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    canvas.className = 'mask-canvas';
+    container.appendChild(canvas);
+    context = canvas.getContext('2d');
   }
 
-  function drawMask(drawingContext, images, factor) {
+  function drawMask(images) {
     var _images = _slicedToArray(images, 3),
-        background = _images[0],
-        mask = _images[1],
-        overlay = _images[2];
+        backgroundImage = _images[0],
+        maskImage = _images[1],
+        overlayImage = _images[2];
 
-    var _calculateValues = calculateValues(factor),
-        _calculateValues2 = _slicedToArray(_calculateValues, 5),
-        x = _calculateValues2[0],
-        y = _calculateValues2[1],
-        width = _calculateValues2[2],
-        height = _calculateValues2[3],
-        opacity = _calculateValues2[4];
-
-    currentScale = factor;
-    drawingContext.globalAlpha = 1;
-    drawingContext.clearRect(0, 0, WIDTH, HEIGHT);
-    drawingContext.drawImage(mask, x, y, width, height);
-    drawingContext.globalCompositeOperation = 'source-in';
-    drawingContext.drawImage(background, 0, 0, WIDTH, HEIGHT);
-    drawingContext.globalCompositeOperation = 'source-over';
-    drawingContext.globalAlpha = opacity;
-    drawingContext.drawImage(overlay, x, y, width, height);
-    return images;
+    context.clearRect(0, 0, width, height);
+    context.drawImage(maskImage, 0, 0, width, height);
+    context.globalCompositeOperation = 'source-in';
+    context.drawImage(backgroundImage, 0, 0, width, height);
+    context.globalCompositeOperation = 'source-over';
+    if (overlayImage) {
+      context.drawImage(overlayImage, 0, 0, width, height);
+    }
   }
 
-  /* Events */
+  id = options.id;
+  background = options.background;
+  mask = options.mask;
+  overlay = options.overlay;
+  width = options.width;
+  height = options.height;
 
-  function animateMaskOut(drawingContext, images) {
-    var delta = SCALE - currentScale;
-    var duration = DURATION * (delta / SCALE);
-    cancelAnimationFrame(animation);
-    animation.run(Date.now(), duration, currentScale, delta, drawingContext, images, drawMask);
-  }
 
-  function animateMaskIn(drawingContext, images) {
-    var duration = DURATION * (currentScale / SCALE);
-    cancelAnimationFrame(animation);
-    animation.run(Date.now(), duration, currentScale, -currentScale, drawingContext, images, drawMask);
-  }
+  container = document.getElementById(id);
+  createCanvas();
 
-  function subscribe(id, drawingContext, images) {
-    var holder = document.getElementById(id);
-    holder.addEventListener('mouseover', function (_) {
-      return animateMaskOut(drawingContext, images);
-    });
-    holder.addEventListener('mouseout', function (_) {
-      return animateMaskIn(drawingContext, images);
-    });
-  }
-
-  /* Initialization */
-
-  var _elementIDs = _slicedToArray(elementIDs, 2),
-      canvasID = _elementIDs[0],
-      holderID = _elementIDs[1];
-
-  var canvas = document.getElementById(canvasID);
-  var context = canvas.getContext('2d');
-
-  var _imageURLs = _slicedToArray(imageURLs, 3),
-      BG_URL = _imageURLs[0],
-      MASK_URL = _imageURLs[1],
-      OVERLAY_URL = _imageURLs[2];
-
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
-
-  return Promise.all([loadImage(BG_URL), loadImage(MASK_URL), loadImage(OVERLAY_URL)]).then(function (images) {
-    return drawMask(context, images, 0);
-  }).then(function (images) {
-    return subscribe(holderID, context, images);
-  });
+  return Promise.all([loadImage(background), loadImage(mask), loadImage(overlay)]).then(drawMask);
 };
 
-},{"animation":1}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 
 /* jshint browser:true */
 
@@ -150,13 +86,18 @@ var mask = require('mask');
 
 es6Promise.polyfill();
 
-var firstFrameIDs = ['canvas', 'holder'];
-var firstFrameURLs = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
-var firstFramePosition = [-120, -200];
+var options = {
+  id: 'holder',
+  background: 'res/images/background.png',
+  mask: 'res/images/mask.png',
+  overlay: 'res/images/overlay.png',
+  width: 1920,
+  height: 1080
+};
 
-mask(firstFrameIDs, firstFrameURLs, firstFramePosition);
+mask(options);
 
-},{"es6-promise":4,"mask":2}],4:[function(require,module,exports){
+},{"es6-promise":3,"mask":1}],3:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1316,7 +1257,7 @@ return Promise;
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":5}],5:[function(require,module,exports){
+},{"_process":4}],4:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1498,4 +1439,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[3]);
+},{}]},{},[2]);

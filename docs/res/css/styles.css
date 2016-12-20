@@ -1,8 +1,5 @@
 /* Baseline, Typography & Vertical Rhythm */
 
-canvas {
-  display: block;
-}
 
 html {
   font-size: 16px;
@@ -27,14 +24,6 @@ body {
 video {
   margin: 18px 0;
   margin: 1.125rem 0;
-}
-
-img {
-  height: auto;
-  max-width: 100%;
-  border: 0;
-  vertical-align: top;
-  -ms-interpolation-mode: bicubic;
 }
 
 /* Selection */
@@ -77,12 +66,6 @@ textarea::placeholder {
     background: #fff;
   }
 
-  img {
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
   @page {
     size: A4;
     margin: .5cm;
@@ -118,31 +101,11 @@ body {
 /* Holder */
 
 .holder {
-  position: relative;
-  display: inline-block;
-  overflow: hidden;
-  min-width: 100%;
-  min-height: 100%;
-}
-
-/* Dummy */
-
-.dummy {
-  display: block;
-  min-width: 100%;
-  min-height: 100%;
-  max-width: none;
-}
-
-/* Canvas */
-
-.canvas {
   position: absolute;
-  z-index: 2;
   top: 0;
   left: 0;
-  min-width: 100%;
-  min-height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 /* Video */
