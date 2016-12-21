@@ -1,5 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
 /* jshint browser:true */
 
 'use strict';
@@ -9,9 +8,16 @@ var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = [
 module.exports = function (options) {
 
   var id = void 0;
-  var background = void 0;
-  var mask = void 0;
-  var overlay = void 0;
+
+  var backgroundImage = void 0;
+  var backgroundURL = void 0;
+
+  var maskImage = void 0;
+  var maskURL = void 0;
+
+  var overlayImage = void 0;
+  var overlayURL = void 0;
+
   var width = void 0;
   var height = void 0;
 
@@ -45,38 +51,65 @@ module.exports = function (options) {
     context = canvas.getContext('2d');
   }
 
-  function drawMask(images) {
-    var _images = _slicedToArray(images, 3),
-        backgroundImage = _images[0],
-        maskImage = _images[1],
-        overlayImage = _images[2];
+  function saveImages(images) {
+    var _images = _slicedToArray(images, 3);
 
-    context.clearRect(0, 0, width, height);
+    backgroundImage = _images[0];
+    maskImage = _images[1];
+    overlayImage = _images[2];
+  }
+
+  function drawMask(matrix) {
+    context.save();
+    if (matrix) {
+      context.transform(matrix);
+    }
     context.drawImage(maskImage, 0, 0, width, height);
+    context.restore();
+  }
+
+  function drawBackground() {
     context.globalCompositeOperation = 'source-in';
     context.drawImage(backgroundImage, 0, 0, width, height);
     context.globalCompositeOperation = 'source-over';
+  }
+
+  function drawOverlay(matrix) {
     if (overlayImage) {
+      context.save();
+      if (matrix) {
+        context.transform(matrix);
+      }
       context.drawImage(overlayImage, 0, 0, width, height);
+      context.restore();
     }
   }
 
+  function draw(matrix) {
+    context.clearRect(0, 0, width, height);
+    drawMask(matrix);
+    drawBackground();
+    drawOverlay(matrix);
+  }
+
   id = options.id;
-  background = options.background;
-  mask = options.mask;
-  overlay = options.overlay;
+  backgroundURL = options.backgroundURL;
+  maskURL = options.maskURL;
+  overlayURL = options.overlayURL;
   width = options.width;
   height = options.height;
-
 
   container = document.getElementById(id);
   createCanvas();
 
-  return Promise.all([loadImage(background), loadImage(mask), loadImage(overlay)]).then(drawMask);
+  Promise.all([loadImage(backgroundURL), loadImage(maskURL), loadImage(overlayURL)]).then(saveImages);
+
+  return {
+    draw: draw
+  };
 };
 
 },{}],2:[function(require,module,exports){
-
 /* jshint browser:true */
 
 'use strict';
@@ -88,14 +121,19 @@ es6Promise.polyfill();
 
 var options = {
   id: 'holder',
-  background: 'res/images/background.png',
-  mask: 'res/images/mask.png',
-  overlay: 'res/images/overlay.png',
+  backgroundURL: 'res/images/background.png',
+  maskURL: 'res/images/mask.png',
+  overlayURL: 'res/images/overlay.png',
   width: 1920,
   height: 1080
 };
 
-mask(options);
+var maskedContent = mask(options);
+
+setTimeout(function (_) {
+  console.log(maskedContent);
+  maskedContent.draw();
+}, 100);
 
 },{"es6-promise":3,"mask":1}],3:[function(require,module,exports){
 (function (process,global){

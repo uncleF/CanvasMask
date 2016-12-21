@@ -9,11 +9,17 @@ es6Promise.polyfill();
 
 const options = {
   id: 'holder',
-  background: 'res/images/background.png',
-  mask: 'res/images/mask.png',
-  overlay: 'res/images/overlay.png',
+  backgroundURL: 'res/images/background.png',
+  maskURL: 'res/images/mask.png',
+  overlayURL: 'res/images/overlay.png',
   width: 1920,
   height: 1080
 };
 
-mask(options);
+let maskedContent = mask(options);
+
+setTimeout(_ => {
+  console.log(maskedContent);
+  maskedContent.draw();
+}, 100);
+
