@@ -3,44 +3,113 @@
 
 'use strict';
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+var BASELINE_MATRIX = [1, 0, 0, 1, 0, 0];
+
+var animation = void 0;
+
+/* Easing */
+
+function cubicInOut(fraction) {
+  return fraction < 0.5 ? 4 * Math.pow(fraction, 3) : (fraction - 1) * (2 * fraction - 2) * (2 * fraction - 2) + 1;
+}
+
+/* Utilities */
+
+function calculateNewMatrix(matrix, fraction) {
+  return matrix.map(function (value, index) {
+    return BASELINE_MATRIX[index] + value * fraction;
+  });
+}
+
+/* Animation */
+
+function progressAnimation(startTime, duration, matrix, fraction, task) {
+  var adjustedFraction = cubicInOut(fraction);
+  var newMatrix = calculateNewMatrix(matrix, adjustedFraction);
+  task(newMatrix);
+  runAnimation(startTime, duration, matrix, task);
+}
+
+function completeAnimation(matrix, task) {
+  var newMatrix = calculateNewMatrix(matrix, 1);
+  task(newMatrix);
+}
+
+function runAnimation(startTime, duration, matrix, task) {
+  animation = requestAnimationFrame(function (_) {
+    var fraction = (Date.now() - startTime) / duration;
+    if (fraction < 1) {
+      progressAnimation(startTime, duration, matrix, fraction, task);
+    } else {
+      completeAnimation(matrix, task);
+    }
+  });
+}
+
+/* Actions */
+
+function stop() {
+  if (animation) {
+    cancelAnimationFrame(animation);
+  }
+}
+
+function go(duration, matrix, task) {
+  stop();
+  runAnimation(Date.now(), duration, matrix, task);
+}
+
+/* Interface */
+
+exports.stop = stop;
+exports.go = go;
+
+},{}],2:[function(require,module,exports){
+/* jshint browser:true */
+
+'use strict';
+
+function downloadImage(href) {
+  return new Promise(function (resolve, reject) {
+    if (href) {
+      (function () {
+        var image = new Image();
+        image.addEventListener('load', function (_) {
+          resolve(image);
+        });
+        image.src = href;
+      })();
+    } else {
+      resolve(false);
+    }
+  });
+}
+
+module.exports = function (urls) {
+  return urls.map(downloadImage);
+};
+
+},{}],3:[function(require,module,exports){
+/* jshint browser:true */
+
+'use strict';
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 module.exports = function (options) {
 
   var id = void 0;
 
   var backgroundImage = void 0;
-  var backgroundURL = void 0;
-
   var maskImage = void 0;
-  var maskURL = void 0;
-
   var overlayImage = void 0;
-  var overlayURL = void 0;
 
+  var canvas = void 0;
+  var context = void 0;
   var width = void 0;
   var height = void 0;
 
   var container = void 0;
-
-  var canvas = void 0;
-  var context = void 0;
-
-  function loadImage(href) {
-    return new Promise(function (resolve, reject) {
-      if (href) {
-        (function () {
-          var image = new Image();
-          image.addEventListener('load', function (_) {
-            resolve(image);
-          });
-          image.src = href;
-        })();
-      } else {
-        resolve(false);
-      }
-    });
-  }
 
   function createCanvas() {
     canvas = document.createElement('canvas');
@@ -51,91 +120,116 @@ module.exports = function (options) {
     context = canvas.getContext('2d');
   }
 
-  function saveImages(images) {
-    var _images = _slicedToArray(images, 3);
-
-    backgroundImage = _images[0];
-    maskImage = _images[1];
-    overlayImage = _images[2];
-  }
-
-  function drawMask(matrix) {
-    context.save();
-    if (matrix) {
-      context.transform(matrix);
-    }
+  function drawMask() {
     context.drawImage(maskImage, 0, 0, width, height);
-    context.restore();
   }
 
   function drawBackground() {
-    context.globalCompositeOperation = 'source-in';
+    context.resetTransform();
+    context.globalCompositeOperation = 'source-out';
     context.drawImage(backgroundImage, 0, 0, width, height);
     context.globalCompositeOperation = 'source-over';
   }
 
-  function drawOverlay(matrix) {
+  function drawOverlay() {
+    context.drawImage(overlayImage, 0, 0, width, height);
+  }
+
+  function clear() {
+    context.clearRect(0, 0, width, height);
+  }
+
+  function draw() {
+    clear();
+    drawMask();
+    drawBackground();
+    drawOverlay();
+  }
+
+  function transformMask(matrix) {
+    var _context;
+
+    context.save();
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, width, height);
+    context.globalCompositeOperation = 'destination-atop';
+    (_context = context).transform.apply(_context, _toConsumableArray(matrix));
+    drawMask();
+    context.restore();
+  }
+
+  function transformOverlay(matrix) {
     if (overlayImage) {
+      var _context2;
+
       context.save();
-      if (matrix) {
-        context.transform(matrix);
-      }
-      context.drawImage(overlayImage, 0, 0, width, height);
+      (_context2 = context).transform.apply(_context2, _toConsumableArray(matrix));
+      drawOverlay();
       context.restore();
     }
   }
 
-  function draw(matrix) {
-    context.clearRect(0, 0, width, height);
-    drawMask(matrix);
+  function transform(matrix) {
+    clear();
+    transformMask(matrix);
     drawBackground();
-    drawOverlay(matrix);
+    transformOverlay(matrix);
   }
 
   id = options.id;
-  backgroundURL = options.backgroundURL;
-  maskURL = options.maskURL;
-  overlayURL = options.overlayURL;
+  backgroundImage = options.backgroundImage;
+  maskImage = options.maskImage;
+  overlayImage = options.overlayImage;
   width = options.width;
   height = options.height;
 
   container = document.getElementById(id);
   createCanvas();
-
-  Promise.all([loadImage(backgroundURL), loadImage(maskURL), loadImage(overlayURL)]).then(saveImages);
+  draw();
 
   return {
-    draw: draw
+    draw: draw,
+    transform: transform
   };
 };
 
-},{}],2:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 /* jshint browser:true */
 
 'use strict';
 
 var es6Promise = require('es6-promise');
 var mask = require('mask');
+var downloadImages = require('downloadImages');
+var animateMatrix = require('animateMatrix');
 
 es6Promise.polyfill();
 
-var options = {
-  id: 'holder',
-  backgroundURL: 'res/images/background.png',
-  maskURL: 'res/images/mask.png',
-  overlayURL: 'res/images/overlay.png',
-  width: 1920,
-  height: 1080
-};
+var maskedContent = void 0;
 
-var maskedContent = mask(options);
+var images = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
 
-setTimeout(function (_) {
-  console.log(maskedContent);
-  maskedContent.draw();
-}, 100);
+var matrix = [1, .15, .15, 1, -300, -400];
 
-},{"es6-promise":3,"mask":1}],3:[function(require,module,exports){
+function initMask(downloadedImages) {
+  var options = {
+    id: 'holder',
+    width: 1920,
+    height: 1080,
+    backgroundImage: downloadedImages[0],
+    maskImage: downloadedImages[1],
+    overlayImage: downloadedImages[2]
+  };
+  maskedContent = mask(options);
+}
+
+function animateMask() {
+  animateMatrix.go(2000, matrix, maskedContent.transform);
+}
+
+Promise.all(downloadImages(images)).then(initMask).then(animateMask);
+
+},{"animateMatrix":1,"downloadImages":2,"es6-promise":5,"mask":3}],5:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -1295,7 +1389,7 @@ return Promise;
 })));
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":4}],4:[function(require,module,exports){
+},{"_process":6}],6:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -1477,4 +1571,4 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}]},{},[2]);
+},{}]},{},[4]);

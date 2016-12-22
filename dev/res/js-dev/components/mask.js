@@ -7,35 +7,15 @@ module.exports = (options) => {
   let id;
 
   let backgroundImage;
-  let backgroundURL;
-
   let maskImage;
-  let maskURL;
-
   let overlayImage;
-  let overlayURL;
 
+  let canvas;
+  let context;
   let width;
   let height;
 
   let container;
-
-  let canvas;
-  let context;
-
-  function loadImage(href) {
-    return new Promise((resolve, reject) => {
-      if (href) {
-        let image = new Image();
-        image.addEventListener('load', _ => {
-          resolve(image);
-        });
-        image.src = href;
-      } else {
-        resolve(false);
-      }
-    });
-  }
 
   function createCanvas() {
     canvas = document.createElement('canvas');
@@ -46,52 +26,66 @@ module.exports = (options) => {
     context = canvas.getContext('2d');
   }
 
-  function saveImages(images) {
-    [backgroundImage, maskImage, overlayImage] = images;
-  }
-
-  function drawMask(matrix) {
-    context.save();
-    if (matrix) {
-      context.transform(matrix);
-    }
+  function drawMask() {
     context.drawImage(maskImage, 0, 0, width, height);
-    context.restore();
   }
 
   function drawBackground() {
-    context.globalCompositeOperation = 'source-in';
+    context.resetTransform();
+    context.globalCompositeOperation = 'source-out';
     context.drawImage(backgroundImage, 0, 0, width, height);
     context.globalCompositeOperation = 'source-over';
   }
 
-  function drawOverlay(matrix) {
+  function drawOverlay() {
+    context.drawImage(overlayImage, 0, 0, width, height);
+  }
+
+  function clear() {
+    context.clearRect(0, 0, width, height);
+  }
+
+  function draw() {
+    clear();
+    drawMask();
+    drawBackground();
+    drawOverlay();
+  }
+
+  function transformMask(matrix) {
+    context.save();
+    context.fillStyle = '#000000';
+    context.fillRect(0, 0, width, height);
+    context.globalCompositeOperation = 'destination-atop';
+    context.transform(...matrix);
+    drawMask();
+    context.restore();
+  }
+
+  function transformOverlay(matrix) {
     if (overlayImage) {
       context.save();
-      if (matrix) {
-        context.transform(matrix);
-      }
-      context.drawImage(overlayImage, 0, 0, width, height);
+      context.transform(...matrix);
+      drawOverlay();
       context.restore();
     }
   }
 
-  function draw(matrix) {
-    context.clearRect(0, 0, width, height);
-    drawMask(matrix);
+  function transform(matrix) {
+    clear();
+    transformMask(matrix);
     drawBackground();
-    drawOverlay(matrix);
+    transformOverlay(matrix);
   }
 
-  ({id, backgroundURL, maskURL, overlayURL, width, height} = options);
+  ({id, backgroundImage, maskImage, overlayImage, width, height} = options);
   container = document.getElementById(id);
   createCanvas();
-
-  Promise.all([loadImage(backgroundURL), loadImage(maskURL), loadImage(overlayURL)])
-    .then(saveImages);
+  draw();
 
   return {
-    draw: draw
+    draw: draw,
+    transform: transform
   };
 
 };
