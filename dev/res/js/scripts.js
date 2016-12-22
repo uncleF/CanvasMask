@@ -125,7 +125,6 @@ module.exports = function (options) {
   }
 
   function drawBackground() {
-    context.resetTransform();
     context.globalCompositeOperation = 'source-out';
     context.drawImage(backgroundImage, 0, 0, width, height);
     context.globalCompositeOperation = 'source-over';
@@ -153,7 +152,7 @@ module.exports = function (options) {
     context.fillStyle = '#000000';
     context.fillRect(0, 0, width, height);
     context.globalCompositeOperation = 'destination-atop';
-    (_context = context).transform.apply(_context, _toConsumableArray(matrix));
+    (_context = context).setTransform.apply(_context, _toConsumableArray(matrix));
     drawMask();
     context.restore();
   }
@@ -163,7 +162,7 @@ module.exports = function (options) {
       var _context2;
 
       context.save();
-      (_context2 = context).transform.apply(_context2, _toConsumableArray(matrix));
+      (_context2 = context).setTransform.apply(_context2, _toConsumableArray(matrix));
       drawOverlay();
       context.restore();
     }
@@ -209,7 +208,7 @@ var maskedContent = void 0;
 
 var images = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
 
-var matrix = [1, .15, .15, 1, -300, -400];
+var matrix = [1, 0.5, -0.5, 1, 30, 10];
 
 function initMask(downloadedImages) {
   var options = {

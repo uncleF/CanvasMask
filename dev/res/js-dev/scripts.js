@@ -17,7 +17,7 @@ const images = [
   'res/images/overlay.png'
 ];
 
-const matrix = [1, .15, .15, 1, -300, -400];
+const matrix = [1, 0.5, -0.5, 1, 30, 10];
 
 function initMask(downloadedImages) {
   const options = {

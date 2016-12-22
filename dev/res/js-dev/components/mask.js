@@ -31,7 +31,6 @@ module.exports = (options) => {
   }
 
   function drawBackground() {
-    context.resetTransform();
     context.globalCompositeOperation = 'source-out';
     context.drawImage(backgroundImage, 0, 0, width, height);
     context.globalCompositeOperation = 'source-over';
@@ -57,7 +56,7 @@ module.exports = (options) => {
     context.fillStyle = '#000000';
     context.fillRect(0, 0, width, height);
     context.globalCompositeOperation = 'destination-atop';
-    context.transform(...matrix);
+    context.setTransform(...matrix);
     drawMask();
     context.restore();
   }
@@ -65,7 +64,7 @@ module.exports = (options) => {
   function transformOverlay(matrix) {
     if (overlayImage) {
       context.save();
-      context.transform(...matrix);
+      context.setTransform(...matrix);
       drawOverlay();
       context.restore();
     }
