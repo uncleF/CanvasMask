@@ -9,8 +9,6 @@ const animateMatrix = require('animateMatrix');
 
 es6Promise.polyfill();
 
-let maskedContent;
-
 const images = [
   'res/images/background.png',
   'res/images/mask.png',
@@ -20,18 +18,17 @@ const images = [
 const matrix = [1, 0.5, -0.5, 1, 30, 10];
 
 function initMask(downloadedImages) {
-  const options = {
+  return mask({
     id: 'holder',
     width: 1920,
     height: 1080,
     backgroundImage: downloadedImages[0],
     maskImage: downloadedImages[1],
     overlayImage: downloadedImages[2]
-  };
-  maskedContent = mask(options);
+  });
 }
 
-function animateMask() {
+function animateMask(maskedContent) {
   animateMatrix.go(2000, matrix, maskedContent.transform);
 }
 

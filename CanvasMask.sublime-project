@@ -1,7 +1,7 @@
 {
   "color_variables_files": ["/Users/uncleFucka/Projects/CanvasMask/dev/res/sass/project/_project.scss", "D:/Projects/Projects/CanvasMask/dev/res/sass/project/_project.scss"],
   "folders": [{
-      "folder_exclude_patterns": ["build", "design", "dev", "docs", "meta", "node_modules", "sources", "tests"],
+      "folder_exclude_patterns": ["build", "design", "dev", "dist", "docs", "meta", "node_modules", "sources", "tests"],
       "file_exclude_patterns": ["*.zip", "*.sublime-project"],
       "follow_symlinks": true,
       "name": "CanvasMask: Project",

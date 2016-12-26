@@ -54,7 +54,7 @@ module.exports = (grunt, options) => {
 
   grunt.registerTask('process-js', [
     'browserify',
-    'copy:service',
+    'copy:dist',
     'string-replace:js',
     'uglify'
   ]);

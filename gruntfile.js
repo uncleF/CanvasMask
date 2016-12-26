@@ -12,6 +12,7 @@ var CONFIG = {
 
   DEVELOPMENT_DIR: 'dev',        // Development
   BUILD_DIR: 'docs',             // Build
+  DISTRIBUTION_DIR: 'dist',      // Distribution
   META_DIR: 'meta',              // Meta Content
   TESTS_DIR: 'tests',            // Tests
 
@@ -39,6 +40,7 @@ var CONFIG = {
   JS_DEV_DIR: 'js-dev',          // Development JavaScript
   JS_DIR: 'js',                  // JavaScript
   JS_BUNDLE: 'scripts',          // JavaScript Filename
+  JS_NAME: 'mask',               // JavaScript Package Filename
   JS_SERVICE: 'service',         // JavaScript Filename
 
   FONTS_DIR: 'fonts'             // Fonts

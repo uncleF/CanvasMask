@@ -4,12 +4,6 @@ module.exports = (grunt, options) => {
   var helpers = options.helpers;
 
   return {
-    service: {
-      cwd: project.res.js.devDir,
-      src: `${project.res.js.service}.js`,
-      dest: project.res.js.dir,
-      expand: true
-    },
     build: {
       cwd: project.dir,
       src: [
@@ -26,6 +20,12 @@ module.exports = (grunt, options) => {
       cwd: project.meta,
       src: ['**/*.*'],
       dest: project.build.dir,
+      expand: true
+    },
+    dist: {
+      cwd: project.res.js.comp,
+      src: `${project.res.js.name}.js`,
+      dest: project.build.dist,
       expand: true
     }
   };

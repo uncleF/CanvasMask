@@ -33,6 +33,7 @@ module.exports = config => {
           devDir: `${config.DEVELOPMENT_DIR}/${config.RESOURCES_DIR}/${config.JS_DEV_DIR}/`,
           comp: `${config.DEVELOPMENT_DIR}/${config.RESOURCES_DIR}/${config.JS_DEV_DIR}/${config.COMPONENTS_DIR}/`,
           bundle: config.JS_BUNDLE,
+          name: config.JS_NAME,
           service: config.JS_SERVICE
         },
         fonts: {
@@ -45,6 +46,7 @@ module.exports = config => {
       },
       build: {
         dir: config.BUILD_DIR + '/',
+        dist: config.DISTRIBUTION_DIR + '/',
         critical: {
           widthDesktop: config.CRITICAL_DESK_W,
           heightDesktop: config.CRITICAL_DESK_H,

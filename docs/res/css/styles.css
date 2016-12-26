@@ -21,11 +21,6 @@ body {
   hyphens: manual;
 }
 
-video {
-  margin: 18px 0;
-  margin: 1.125rem 0;
-}
-
 /* Selection */
 
 ::-moz-selection {
@@ -98,27 +93,6 @@ body {
   margin: 0;
 }
 
-/* Holder */
-
-.holder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* Video */
-
-.video {
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  height: 100%;
-  margin: 0;
-}
-
 /* Phone Layout */
 
 @media only screen and (max-width: 45em) {
@@ -144,4 +118,17 @@ body {
     padding: 2.54cm;
   }
 
+}
+
+/* Holder */
+
+.holder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  background: url('../images/baseBackground.jpg') no-repeat;
+  background-size: cover;
 }

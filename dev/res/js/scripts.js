@@ -1,4 +1,5 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
 /* jshint browser:true */
 
 'use strict';
@@ -65,6 +66,7 @@ exports.stop = stop;
 exports.go = go;
 
 },{}],2:[function(require,module,exports){
+
 /* jshint browser:true */
 
 'use strict';
@@ -90,6 +92,7 @@ module.exports = function (urls) {
 };
 
 },{}],3:[function(require,module,exports){
+
 /* jshint browser:true */
 
 'use strict';
@@ -193,6 +196,7 @@ module.exports = function (options) {
 };
 
 },{}],4:[function(require,module,exports){
+
 /* jshint browser:true */
 
 'use strict';
@@ -204,25 +208,22 @@ var animateMatrix = require('animateMatrix');
 
 es6Promise.polyfill();
 
-var maskedContent = void 0;
-
 var images = ['res/images/background.png', 'res/images/mask.png', 'res/images/overlay.png'];
 
 var matrix = [1, 0.5, -0.5, 1, 30, 10];
 
 function initMask(downloadedImages) {
-  var options = {
+  return mask({
     id: 'holder',
     width: 1920,
     height: 1080,
     backgroundImage: downloadedImages[0],
     maskImage: downloadedImages[1],
     overlayImage: downloadedImages[2]
-  };
-  maskedContent = mask(options);
+  });
 }
 
-function animateMask() {
+function animateMask(maskedContent) {
   animateMatrix.go(2000, matrix, maskedContent.transform);
 }
 
